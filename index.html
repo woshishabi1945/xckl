@@ -13,13 +13,13 @@
     <div id="time-container">
       当前时间：<span id="current-time">正在加载...</span>
     </div>
+    <div id="countdown-container"></div>
+    <button id="wish-button" onclick="playWishMusic()">恭喜发财</button>
   </div>
 
-  <!-- 透明按钮 -->
-  <button class="invisible-btn" onclick="showPasswordPrompt()"></button>
-
   <!-- 背景音乐 -->
-  <audio id="backgroundMusic" src="your-music-file.mp3" loop autoplay></audio>
+  <audio id="backgroundMusic" src="your-background-music.mp3" loop autoplay></audio>
+  <audio id="wishMusic" src="your-wish-music.mp3"></audio>
 
   <script>
     // 显示当前时间
@@ -38,19 +38,36 @@
       timeContainer.textContent = formattedTime;
     }
 
-    // 每秒更新一次时间
-    setInterval(updateTime, 1000);
-    updateTime();
+    // 计算距离春节的时间
+    function updateCountdown() {
+      const countdownContainer = document.getElementById('countdown-container');
+      const now = new Date();
+      const springFestival = new Date(now.getFullYear(), 1, 10); // 假设春节是2025年2月10日
+      const timeDiff = springFestival - now;
 
-    // 密码输入
-    function showPasswordPrompt() {
-      const password = prompt("请输入密码：");
-      if (password === "0630") {
-        window.location.href = "secret.html"; // 跳转到新的页面
-      } else if (password !== null) {
-        alert("密码错误，请重试！");
+      if (timeDiff > 0) {
+        const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+        countdownContainer.textContent = `距离春节还有 ${days} 天 ${hours} 小时 ${minutes} 分钟 ${seconds} 秒`;
+      } else {
+        countdownContainer.textContent = "春节已经到了！🎉";
       }
     }
+
+    // 恭喜发财按钮的音乐播放功能
+    function playWishMusic() {
+      const wishMusic = document.getElementById('wishMusic');
+      wishMusic.play();
+      updateCountdown();
+    }
+
+    // 每秒更新一次时间和倒计时
+    setInterval(updateTime, 1000);
+    setInterval(updateCountdown, 1000);
+    updateTime();
+    updateCountdown();
   </script>
 </body>
 </html>

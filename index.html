@@ -8,17 +8,29 @@
 </head>
 <body>
   <div class="container">
-    <h1>🎉 新春快乐！🎉</h1>
-    <p>祝您新春愉快，身体健康，万事如意！</p>
+    <!-- 祝福内容 -->
+    <div id="new-year-message" style="display: none;">
+      <h1>🎉 新春快乐！🎉</h1>
+      <p>祝您新春愉快，身体健康，万事如意！</p>
+    </div>
+
+    <!-- 当前时间 -->
     <div id="time-container">
       当前时间：<span id="current-time">正在加载...</span>
     </div>
+
+    <!-- 倒计时 -->
     <div id="countdown-container"></div>
+
+    <!-- 恭喜发财按钮 -->
     <button id="wish-button" onclick="playWishMusic()">恭喜发财</button>
+
+    <!-- 隐藏按钮（右上角） -->
+    <button class="invisible-btn" id="secret-btn" onclick="enterSecretPage()"></button>
   </div>
 
   <!-- 背景音乐 -->
-  <audio id="backgroundMusic" src="ground-music.mp3" loop autoplay></audio>
+  <audio id="backgroundMusic" src="your-background-music.mp3" loop autoplay></audio>
   <audio id="wishMusic" src="your-music-file.mp3"></audio>
 
   <script>
@@ -41,8 +53,9 @@
     // 计算距离春节的时间
     function updateCountdown() {
       const countdownContainer = document.getElementById('countdown-container');
+      const newYearMessage = document.getElementById('new-year-message');
       const now = new Date();
-      const springFestival = new Date(2025, 0, 29); // 2025年1月29日（注意：月份从0开始）
+      const springFestival = new Date(2025, 0, 29); // 2025年1月29日
       const timeDiff = springFestival - now;
 
       if (timeDiff > 0) {
@@ -51,8 +64,13 @@
         const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
         countdownContainer.textContent = `距离春节还有 ${days} 天 ${hours} 小时 ${minutes} 分钟 ${seconds} 秒`;
+
+        // 隐藏祝福内容
+        newYearMessage.style.display = "none";
       } else {
+        // 显示祝福内容
         countdownContainer.textContent = "春节已经到了！🎉";
+        newYearMessage.style.display = "block";
       }
     }
 
@@ -61,6 +79,16 @@
       const wishMusic = document.getElementById('wishMusic');
       wishMusic.play();
       updateCountdown();
+    }
+
+    // 隐藏按钮功能，输入密码后跳转新页面
+    function enterSecretPage() {
+      const password = prompt("请输入密码：");
+      if (password === "24630") {
+        window.location.href = "secret.html"; // 跳转到新页面
+      } else if (password !== null) {
+        alert("密码错误，请重试！");
+      }
     }
 
     // 每秒更新一次时间和倒计时

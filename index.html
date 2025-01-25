@@ -25,8 +25,11 @@
     <!-- 恭喜发财按钮 -->
     <button id="wish-button" onclick="playWishMusic()">恭喜发财</button>
 
-    <!-- 隐藏按钮（右上角） -->
-    <button class="invisible-btn" id="secret-btn" onclick="enterSecretPage()"></button>
+    <!-- 左上角隐藏按钮 -->
+    <button class="invisible-btn" id="left-secret-btn" onclick="enterBlessingPage()"></button>
+
+    <!-- 右上角隐藏按钮 -->
+    <button class="invisible-btn" id="right-secret-btn" onclick="enterSecretPage()"></button>
   </div>
 
   <!-- 背景音乐 -->
@@ -81,11 +84,21 @@
       updateCountdown();
     }
 
-    // 隐藏按钮功能，输入密码后跳转新页面
+    // 左上角按钮功能：输入密码后跳转祝福页面
+    function enterBlessingPage() {
+      const password = prompt("请输入密码：");
+      if (password === "0630") {
+        window.location.href = "secret.html"; // 跳转到祝福页面
+      } else if (password !== null) {
+        alert("密码错误，请重试！");
+      }
+    }
+
+    // 右上角按钮功能：输入密码后跳转秘密页面
     function enterSecretPage() {
       const password = prompt("请输入密码：");
       if (password === "24630") {
-        window.location.href = "secret.html"; // 跳转到新页面
+        window.location.href = "blessing.html"; // 跳转到时间差页面
       } else if (password !== null) {
         alert("密码错误，请重试！");
       }

@@ -18,7 +18,7 @@
   </div>
 
   <!-- 背景音乐 -->
-  <audio id="backgroundMusic" src="-music-file.mp3" loop autoplay></audio>
+  <audio id="backgroundMusic" src="ground-music.mp3" loop autoplay></audio>
   <audio id="wishMusic" src="your-music-file.mp3"></audio>
 
   <script>
@@ -42,7 +42,7 @@
     function updateCountdown() {
       const countdownContainer = document.getElementById('countdown-container');
       const now = new Date();
-      const springFestival = new Date(now.getFullYear(), 1, 10); // 假设春节是2025年2月10日
+      const springFestival = new Date(2025, 0, 29); // 2025年1月29日（注意：月份从0开始）
       const timeDiff = springFestival - now;
 
       if (timeDiff > 0) {

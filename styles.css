@@ -30,6 +30,27 @@ p {
   display: inline-block;
 }
 
+#countdown-container {
+  margin-top: 20px;
+  font-size: 1.5em;
+  color: #8B0000;
+}
+
+button {
+  background-color: #FF4500;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1.2em;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+
+button:hover {
+  background-color: #CD5C5C;
+}
+
 /* 隐藏透明按钮 */
 .invisible-btn {
   position: absolute;

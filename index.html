@@ -20,12 +20,18 @@
   <!-- 透明按钮 -->
   <button class="invisible-btn" onclick="showPasswordPrompt()"></button>
 
-  <audio id="newYearMusic" src="your-music-file.mp3"></audio>
+  <!-- 背景音乐 -->
+  <audio id="backgroundMusic" src="your-music-file.mp3" loop autoplay></audio>
+
   <script>
-    // 播放音乐
+    // 播放音乐按钮功能
     function playMusic() {
-      const music = document.getElementById('newYearMusic');
-      music.play();
+      const music = document.getElementById('backgroundMusic');
+      if (music.paused) {
+        music.play();
+      } else {
+        music.pause();
+      }
     }
 
     // 显示当前时间

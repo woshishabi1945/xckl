@@ -16,6 +16,10 @@
     <button onclick="playMusic()">点击播放新年音乐</button>
     <img src="https://source.unsplash.com/800x600/?chinese-new-year" alt="新春图片">
   </div>
+
+  <!-- 透明按钮 -->
+  <button class="invisible-btn" onclick="showPasswordPrompt()"></button>
+
   <audio id="newYearMusic" src="your-music-file.mp3"></audio>
   <script>
     // 播放音乐
@@ -29,7 +33,7 @@
       const timeContainer = document.getElementById('current-time');
       const now = new Date();
       const formattedTime = now.toLocaleString('zh-CN', {
-        hour12: false, // 24小时制
+        hour12: false,
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -42,7 +46,17 @@
 
     // 每秒更新一次时间
     setInterval(updateTime, 1000);
-    updateTime(); // 页面加载时立即更新一次
+    updateTime();
+
+    // 密码输入
+    function showPasswordPrompt() {
+      const password = prompt("请输入密码：");
+      if (password === "0630") {
+        window.location.href = "secret.html"; // 跳转到新的页面
+      } else if (password !== null) {
+        alert("密码错误，请重试！");
+      }
+    }
   </script>
 </body>
 </html>

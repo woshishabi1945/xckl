@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新春快乐</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>🎉 新春快乐！🎉</h1>
+    <p>祝您新春愉快，身体健康，万事如意！</p>
+    <div id="time-container">
+      当前时间：<span id="current-time">正在加载...</span>
+    </div>
+    <button onclick="playMusic()">点击播放新年音乐</button>
+    <img src="https://source.unsplash.com/800x600/?chinese-new-year" alt="新春图片">
+  </div>
+  <audio id="newYearMusic" src="your-music-file.mp3"></audio>
+  <script>
+    // 播放音乐
+    function playMusic() {
+      const music = document.getElementById('newYearMusic');
+      music.play();
+    }
+
+    // 显示当前时间
+    function updateTime() {
+      const timeContainer = document.getElementById('current-time');
+      const now = new Date();
+      const formattedTime = now.toLocaleString('zh-CN', {
+        hour12: false, // 24小时制
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      timeContainer.textContent = formattedTime;
+    }
+
+    // 每秒更新一次时间
+    setInterval(updateTime, 1000);
+    updateTime(); // 页面加载时立即更新一次
+  </script>
+</body>
+</html>

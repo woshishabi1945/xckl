@@ -13,12 +13,24 @@
       margin: 0;
       background-color: #ffe6e9;
       font-family: Arial, sans-serif;
+      overflow: hidden;
     }
 
-    .heart {
-      font-size: 100px;
-      color: #ff5a79;
+    .big-heart {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transform: scale(1);
       animation: heartbeat 1s infinite;
+    }
+
+    .small-heart {
+      position: absolute;
+      font-size: 16px;
+      color: #ff5a79;
     }
 
     @keyframes heartbeat {
@@ -32,6 +44,30 @@
   </style>
 </head>
 <body>
-  <div class="heart">❤️</div>
+  <div class="big-heart" id="bigHeart"></div>
+
+  <script>
+    // 小爱心的位置数据，绘制一个大爱心
+    const heartPositions = [
+      [0, -80], [20, -60], [-20, -60], [40, -40], [-40, -40],
+      [60, -20], [-60, -20], [80, 0], [-80, 0], [60, 20],
+      [-60, 20], [40, 40], [-40, 40], [20, 60], [-20, 60],
+      [0, 80], [10, -30], [-10, -30], [30, -10], [-30, -10],
+      [50, 10], [-50, 10], [30, 30], [-30, 30]
+    ];
+
+    // 获取大爱心容器
+    const bigHeart = document.getElementById('bigHeart');
+
+    // 创建小爱心
+    heartPositions.forEach(([x, y]) => {
+      const smallHeart = document.createElement('div');
+      smallHeart.className = 'small-heart';
+      smallHeart.textContent = '❤️';
+      smallHeart.style.left = `${150 + x}px`; // 调整位置居中
+      smallHeart.style.top = `${150 + y}px`;
+      bigHeart.appendChild(smallHeart);
+    });
+  </script>
 </body>
 </html>

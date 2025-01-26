@@ -10,9 +10,10 @@
   <div class="container">
     <h1>我们已经认识了</h1>
     <p id="elapsed-time">正在计算...</p>
-
     <!-- 花海按钮 -->
     <button onclick="goToFlowerSea()">花海</button>
+    <!-- 爱心按钮 -->
+    <button onclick="goToLovePage()">爱心</button>
   </div>
 
   <script>
@@ -34,9 +35,14 @@
       }
     }
 
-    // 跳转到花海链接
+    // 跳转到花海页面
     function goToFlowerSea() {
       window.location.href = "https://www.douyin.com/search/%E8%8A%B1%E6%B5%B7%E8%8A%B1?aid=52d99ebe-4d21-4143-9202-2a79ac09239f&type=general";
+    }
+
+    // 跳转到爱心页面
+    function goToLovePage() {
+      window.location.href = "love.html"; // 跳转到心形页面
     }
 
     // 每秒更新时间

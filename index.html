@@ -8,6 +8,11 @@
 </head>
 <body>
   <div class="container">
+    <!-- 心情显示区域 -->
+    <div id="mood-container">
+      心情: <span id="mood-content">正在加载...</span>
+    </div>
+
     <!-- 祝福内容 -->
     <div id="new-year-message" style="display: none;">
       <h1>🎉 新春快乐！🎉</h1>
@@ -37,6 +42,23 @@
   <audio id="wishMusic" src="your-music-file.mp3"></audio>
 
   <script>
+    // 获取心情内容
+    async function fetchMood() {
+      try {
+        const response = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://sharechain.qq.com/b2c73f362aadf808cf9bac5c774e989d'));
+        const data = await response.json();
+        const parser = new DOMParser();
+        const htmlDoc = parser.parseFromString(data.contents, 'text/html');
+        
+        // 假设要获取的文本在 <body> 标签内
+        const moodText = htmlDoc.body.textContent || "";
+        document.getElementById('mood-content').textContent = moodText; // 更新心情内容
+      } catch (error) {
+        console.error('Error fetching mood:', error);
+        document.getElementById('mood-content').textContent = "无法获取心情内容";
+      }
+    }
+
     // 显示当前时间
     function updateTime() {
       const timeContainer = document.getElementById('current-time');
@@ -106,6 +128,15 @@
 
     // 每秒更新一次时间和倒计时
     setInterval(updateTime, 1000);
+    setInterval(updateCountdown, 1000);
+    updateTime();
+    updateCountdown();
+
+    // 获取心情内容
+    fetchMood(); // 初始获取心情内容
+  </script>
+</body>
+</html>    setInterval(updateTime, 1000);
     setInterval(updateCountdown, 1000);
     updateTime();
     updateCountdown();

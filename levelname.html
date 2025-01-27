@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>新年快乐</title>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+        .start-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            cursor: pointer;
+            z-index: 1000;
+            background: transparent;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        #startButton {
+            width: 120px;
+            height: 150px;
+            background: url('images/5f3eb1bdcb74a407952920ea0fe2cd35.jpg') center/contain no-repeat;
+            border: none;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #000;
+            mix-blend-mode: screen;
+            filter: brightness(1.2) contrast(1.2);
+        }
+        
+        #startButton::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 18px;
+            background: linear-gradient(to top, #8B4513, #D2691E);
+            border-radius: 1px;
+            box-shadow: 0 0 2px rgba(139, 69, 19, 0.5);
+        }
+        
+        #startButton::after {
+            content: '';
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            width: 6px;
+            height: 6px;
+            transform: translateX(-50%);
+            background: radial-gradient(circle, #FFF 10%, #FFD700 40%, transparent 70%);
+            animation: glow 0.5s infinite;
+            border-radius: 50%;
+            box-shadow: 
+                0 0 2px #FFF,
+                0 0 4px #FFD700,
+                0 0 6px #FF4500;
+        }
+
+        .spark {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #FFD700;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            filter: blur(0.5px);
+        }
+
+        .firecracker-pattern {
+            display: none;
+        }
+
+        @keyframes sparkle {
+            0% { transform: translateX(-50%) scale(1) rotate(0deg); opacity: 1; }
+            50% { transform: translateX(-50%) scale(1.2) rotate(180deg); opacity: 0.8; }
+            100% { transform: translateX(-50%) scale(1) rotate(360deg); opacity: 1; }
+        }
+
+        #startButton:hover {
+            transform: scale(1.05);
+        }
+
+        .click-text {
+            color: #FFD700;
+            font-size: 24px;
+            margin-top: 20px;
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); }
+            50% { transform: scale(1.1); text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6); }
+            100% { transform: scale(1); text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); }
+        }
+
+        @keyframes glow {
+            0% {
+                opacity: 1;
+                transform: translateX(-50%) scale(1);
+            }
+            100% {
+                opacity: 0.4;
+                transform: translateX(-50%) scale(1.2);
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="start-container">
+        <button id="startButton">
+            <div class="spark"></div>
+            <div class="spark"></div>
+            <div class="spark"></div>
+            <div class="spark"></div>
+            <div class="spark"></div>
+            <div class="firecracker-pattern">
+                <div class="pattern-circle"></div>
+                <div class="pattern-circle"></div>
+                <div class="pattern-circle"></div>
+                <div class="pattern-circle"></div>
+            </div>
+        </button>
+        <div class="click-text">点我</div>
+    </div>
+    <script>
+        // 初始化变�?
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let fireworks = [];
+        let particles = [];
+        let isPlaying = false;
+        let currentText = ''; // 添加当前显示文字变量
+
+        // 设置画布尺寸
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // 获取开始按钮和容器
+        const startContainer = document.querySelector('.start-container');
+        const startButton = document.getElementById('startButton');
+
+        // 绘制点阵文字
+        function drawDotText(text) {
+            currentText = text;
+            const dotRadius = 4;
+            const fontSize = text.length === 1 ? 300 : 200;
+            
+            // 创建离屏画布
+            const offCanvas = document.createElement('canvas');
+            const offCtx = offCanvas.getContext('2d');
+            offCanvas.width = canvas.width;
+            offCanvas.height = canvas.height;
+            
+            offCtx.fillStyle = '#fff';
+            offCtx.font = `bold ${fontSize}px "Microsoft YaHei"`;
+            offCtx.textAlign = 'center';
+            offCtx.textBaseline = 'middle';
+            offCtx.fillText(text, canvas.width/2, canvas.height/2);
+            
+            const imageData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
+            const pixels = imageData.data;
+            
+            ctx.save();
+            for(let y = 0; y < canvas.height; y += dotRadius*2) {
+                for(let x = 0; x < canvas.width; x += dotRadius*2) {
+                    const i = (y * canvas.width + x) * 4;
+                    if(pixels[i] > 128) {
+                        ctx.beginPath();
+                        ctx.fillStyle = '#fff';
+                        ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+            ctx.restore();
+        }
+
+        // 清除文字
+        function clearText() {
+            currentText = '';
+        }
+
+        // 主循环函�?
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 如果有文字需要显示，重新绘制文字
+            if (currentText) {
+                drawDotText(currentText);
+            }
+            
+            // 更新和绘制烟�?
+            for(let i = fireworks.length - 1; i >= 0; i--) {
+                const firework = fireworks[i];
+                if(!firework.update()) {
+                    fireworks.splice(i, 1);
+                } else {
+                    firework.draw();
+                }
+            }
+            
+            // 更新和绘制粒�?
+            for(let i = particles.length - 1; i >= 0; i--) {
+                const particle = particles[i];
+                if(!particle.update()) {
+                    particles.splice(i, 1);
+                } else {
+                    particle.draw();
+                }
+            }
+            
+            // 自动生成新烟�?- 增加频率和最大数�?
+            if(fireworks.length < 3 && Math.random() < 0.05 && isPlaying) {
+                const firework = createRandomFirework();
+                fireworks.push(firework);
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        // 添加开始按钮点击事�?
+        startContainer.addEventListener('click', async () => {
+            startContainer.style.display = 'none';
+            
+            // 开始动画循�?
+            animate();
+            
+            // 倒计�?
+            for (let i = 3; i >= 1; i--) {
+                drawDotText(i.toString());
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            // 清除倒计时文�?
+            clearText();
+            
+            // 开始放烟花
+            isPlaying = true;
+            const firework = createRandomFirework();
+            fireworks.push(firework);
+
+            // 显示第一段祝福语
+            drawDotText("虽不知你名");
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            // 清除第一段祝福语
+            clearText();
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // 显示第二段祝福语
+            drawDotText("但也祝福你");
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            // 清除第二段祝福语
+            clearText();
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // 显示第三段祝福语
+            drawDotText("天天开心");
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            drawDotText("新年快乐");
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+
+            // 清除第三段祝福语
+            clearText();
+        });
+
+        // 添加点击事件
+        canvas.addEventListener('click', (e) => {
+            if (!isPlaying) return;
+            const firework = createRandomFirework(e.clientX, e.clientY);
+            fireworks.push(firework);
+        });
+
+        // 窗口大小改变时调整画布大�?
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // 基础烟花�?
+        class Firework {
+            constructor(x, y) {
+                this.x = x || canvas.width * 0.2 + Math.random() * canvas.width * 0.6; // 限制水平范围
+                this.y = canvas.height;
+                this.targetY = y || canvas.height * 0.15 + Math.random() * canvas.height * 0.4; // 调整目标高度范围
+                this.coordinates = [];
+                this.coordinateCount = 3;
+                
+                while(this.coordinateCount--) {
+                    this.coordinates.push([this.x, this.y]);
+                }
+                
+                this.initialSize = 2;
+                this.size = this.initialSize;
+                this.explosionScale = 1;
+                
+                this.speed = 30; // 增加初始速度
+                this.friction = 0.98; // 减小摩擦�?
+                this.gravity = 0.12; // 微调重力加速度
+                this.brightness = 80;
+                this.hue = Math.random() * 360;
+                this.hasExploded = false;
+            }
+
+            update() {
+                this.coordinates.pop();
+                this.coordinates.unshift([this.x, this.y]);
+                
+                // 更新速度和位�?
+                if (!this.hasExploded) {
+                    // 应用摩擦�?
+                    this.speed *= this.friction;
+                    this.y -= this.speed;
+                    
+                    // 检查是否应该爆�?
+                    if (this.y <= this.targetY || this.speed < 4) { // 调整最小速度阈�?
+                        this.explode();
+                        this.hasExploded = true;
+                        return false;
+                    }
+                }
+                
+                return !this.hasExploded;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], 
+                          this.coordinates[this.coordinates.length - 1][1]);
+                ctx.lineTo(this.x, this.y);
+                ctx.strokeStyle = `hsl(${this.hue}, 100%, ${this.brightness}%)`;
+                ctx.lineWidth = this.size;
+                ctx.stroke();
+            }
+
+            explode() {
+                const particleCount = 80;
+                for(let i = 0; i < particleCount; i++) {
+                    const angle = Math.PI * 2 * i / particleCount;
+                    particles.push(new Particle(
+                        this.x,
+                        this.y,
+                        angle,
+                        this.hue,
+                        this.size,
+                        1
+                    ));
+                }
+            }
+        }
+
+        // 基础粒子�?
+        class Particle {
+            constructor(x, y, angle, hue, size, scale = 1) {
+                this.x = x;
+                this.y = y;
+                this.coordinates = [];
+                this.coordinateCount = 5;
+                
+                while(this.coordinateCount--) {
+                    this.coordinates.push([this.x, this.y]);
+                }
+                
+                this.angle = angle;
+                this.speed = (Math.random() * 8 + 2) * scale;
+                this.friction = 0.95;
+                this.gravity = 0.3;
+                this.hue = hue;
+                this.brightness = Math.random() * 20 + 80;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.02 + 0.02;
+                this.size = size;
+            }
+
+            update() {
+                this.coordinates.pop();
+                this.coordinates.unshift([this.x, this.y]);
+                
+                this.speed *= this.friction;
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed + this.gravity;
+                this.alpha -= this.decay;
+                
+                return this.alpha >= 0.05;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], 
+                          this.coordinates[this.coordinates.length - 1][1]);
+                ctx.lineTo(this.x, this.y);
+                ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+                ctx.lineWidth = this.size;
+                ctx.stroke();
+            }
+        }
+
+        // 修改创建随机烟花函数
+        function createRandomFirework(x, y) {
+            // 定义烟花类型和对应的权重
+            const fireworkTypes = [
+                { type: Firework, weight: 10 },            // 基础烟花
+                { type: FlowerFirework, weight: 10 },      // 花朵烟花
+                { type: MeteorFirework, weight: 10 },      // 流星烟花
+                { type: PalmFirework, weight: 10 },        // 椰叶烟花
+                { type: StarRingFirework, weight: 10 },    // 星环烟花
+                { type: DoubleExplodeFirework, weight: 10 },// 双重爆炸烟花
+                { type: DreamPlanetFirework, weight: 10 }, // 梦幻星球烟花
+                { type: NebulaFirework, weight: 10 },      // 星云烟花
+                { type: WaterfallFirework, weight: 10 },   // 瀑布烟花
+                { type: RainbowCascadeFirework, weight: 10 },// 彩虹瀑布烟花
+                { type: StarTrailFirework, weight: 10 },   // 星光轨迹烟花
+                // { type: StarFountainFirework, weight: 10 } // 星光喷泉烟花
+            ];
+            
+            // 计算总权重
+            const totalWeight = fireworkTypes.reduce((sum, type) => sum + type.weight, 0);
+            
+            // 生成随机�?
+            let random = Math.random() * totalWeight;
+            
+            // 根据权重选择烟花类型
+            let selectedType = fireworkTypes[0].type;
+            for (const firework of fireworkTypes) {
+                random -= firework.weight;
+                if (random <= 0) {
+                    selectedType = firework.type;
+                    break;
+                }
+            }
+            
+            if (!x) {
+                x = canvas.width * 0.2 + Math.random() * canvas.width * 0.6;
+            }
+            
+            return new selectedType(x, y);
+        }
+
+        // 花朵烟花�?
+        class FlowerFirework extends Firework {
+            explode() {
+                const petalCount = 6; // 花瓣数量
+                const particlesPerPetal = Math.floor(30 * this.explosionScale); // 每个花瓣的粒子数
+                const centerParticles = Math.floor(20 * this.explosionScale); // 花心粒子�?
+                
+                // 创建花瓣
+                for(let petal = 0; petal < petalCount; petal++) {
+                    const baseAngle = (Math.PI * 2 * petal) / petalCount;
+                    const spread = Math.PI * 0.3; // 花瓣展开角度
+                    
+                    for(let i = 0; i < particlesPerPetal; i++) {
+                        const progress = i / particlesPerPetal;
+                        const angle = baseAngle + (Math.random() - 0.5) * spread;
+                        
+                        particles.push(new FlowerParticle(
+                            this.x,
+                            this.y,
+                            angle,
+                            this.hue + petal * 10,
+                            this.size * (0.5 - progress * 0.3),
+                            this.explosionScale,
+                            'petal',
+                            progress
+                        ));
+                    }
+                }
+                
+                // 创建花心
+                for(let i = 0; i < centerParticles; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    particles.push(new FlowerParticle(
+                        this.x,
+                        this.y,
+                        angle,
+                        this.hue + 30,
+                        this.size * 0.3,
+                        this.explosionScale,
+                        'center',
+                        0
+                    ));
+                }
+            }
+        }
+
+        // 花朵粒子�?
+        class FlowerParticle extends Particle {
+            constructor(x, y, angle, hue, size, scale, type, position) {
+                super(x, y, angle, hue, size, scale);
+                this.type = type;
+                this.position = position;
+                
+                if(type === 'petal') {
+                    this.gravity = 0.12;
+                    this.decay = 0.018;
+                    this.friction = 0.97;
+                    this.brightness = Math.random() * 20 + 80;
+                } else {
+                    this.gravity = 0.1;
+                    this.decay = 0.022;
+                    this.friction = 0.96;
+                    this.brightness = Math.random() * 30 + 70;
+                }
+                
+                this.twinkle = Math.random() < 0.3;
+                this.twinkleSpeed = Math.random() * 0.03 + 0.01;
+            }
+
+            update() {
+                this.coordinates.pop();
+                this.coordinates.unshift([this.x, this.y]);
+                
+                if(this.twinkle) {
+                    this.brightness = 70 + Math.sin(Date.now() * this.twinkleSpeed) * 20;
+                }
+                
+                this.speed *= this.friction;
+                
+                const wave = Math.sin(Date.now() * 0.002 + this.position * 5) * 0.1;
+                this.x += Math.cos(this.angle + wave) * this.speed;
+                this.y += Math.sin(this.angle + wave) * this.speed + this.gravity;
+                
+                this.alpha -= this.decay;
+                return this.alpha >= 0.05;
+            }
+        }
+
+        // 流星烟花�?
+        class MeteorFirework extends Firework {
+            explode() {
+                const mainTrailCount = Math.floor(40 * this.explosionScale);
+                const sparkCount = Math.floor(60 * this.explosionScale);
+                
+                // 创建主要流星轨迹
+                for(let i = 0; i < mainTrailCount; i++) {
+                    const angle = Math.PI * 2 * i / mainTrailCount;
+                    const spread = Math.PI * 0.2; // 流星扩散角度
+                    
+                    particles.push(new MeteorParticle(
+                        this.x,
+                        this.y,
+                        angle + (Math.random() - 0.5) * spread,
+                        this.hue,
+                        this.size * 1.2,
+                        this.explosionScale,
+                        'trail'
+                    ));
+                }
+                
+                // 创建星火效果
+                for(let i = 0; i < sparkCount; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    particles.push(new MeteorParticle(
+                        this.x,
+                        this.y,
+                        angle,
+                        this.hue + Math.random() * 30 - 15,
+                        this.size * 0.6,
+                        this.explosionScale,
+                        'spark'
+                    ));
+                }
+            }
+        }
+
+        // 流星粒子�?
+        class MeteorParticle extends Particle {
+            constructor(x, y, angle, hue, size, scale, type) {
+                super(x, y, angle, hue, size, scale);
+                this.type = type;
+                
+                if(type === 'trail') {
+                    this.speed = (Math.random() * 15 + 5) * scale;
+                    this.gravity = 0.2;
+                    this.decay = 0.015;
+                    this.friction = 0.98;
+                    this.brightness = Math.random() * 20 + 80;
+                    this.coordinateCount = 8; // 更长的轨�?
+                    this.coordinates = [];
+                    while(this.coordinateCount--) {
+                        this.coordinates.push([this.x, this.y]);
+                    }
+                } else {
+                    this.speed = (Math.random() * 8 + 2) * scale;
+                    this.gravity = 0.15;
+                    this.decay = 0.02;
+                    this.friction = 0.95;
+                    this.brightness = Math.random() * 30 + 70;
+                }
+                
+                this.flicker = Math.random() < 0.5;
+                this.flickerSpeed = Math.random() * 0.02 + 0.01;
+            }
+
+            update() {
+                this.coordinates.pop();
+                this.coordinates.unshift([this.x, this.y]);
+                
+                if(this.flicker) {
+                    this.brightness = 70 + Math.sin(Date.now() * this.flickerSpeed) * 30;
+                }
+                
+                this.speed *= this.friction;
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed + this.gravity;
+                
+                this.alpha -= this.decay;
+                return this.alpha >= 0.05;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], 
+                          this.coordinates[this.coordinates.length - 1][1]);
+                
+                // 为流星轨迹创建渐变效�?
+                if(this.type === 'trail') {
+                    for(let i = this.coordinates.length - 2; i >= 0; i--) {
+                        ctx.lineTo(this.coordinates[i][0], this.coordinates[i][1]);
+                    }
+                } else {
+                    ctx.lineTo(this.x, this.y);
+                }
+                
+                ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+                ctx.lineWidth = this.size;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            }
+        }
+
+        // 椰叶烟花�?
+        class PalmFirework extends Firework {
+            explode() {
+                const leafCount = 8; // 椰叶数量
+                const particlesPerLeaf = Math.floor(35 * this.explosionScale); // 每片叶子的粒子数
+                const trunkParticles = Math.floor(25 * this.explosionScale); // 树干粒子�?
+                
+                // 创建椰子树叶
+                for(let leaf = 0; leaf < leafCount; leaf++) {
+                    const baseAngle = (Math.PI * leaf) / (leafCount / 2);
+                    const spread = Math.PI * 0.15; // 叶子展开角度
+                    
+                    for(let i = 0; i < particlesPerLeaf; i++) {
+                        const progress = i / particlesPerLeaf;
+                        const angle = baseAngle + (Math.random() - 0.5) * spread * (1 - progress);
+                        const curve = Math.sin(progress * Math.PI) * 0.4; // 叶子弯曲程度
+                        
+                        particles.push(new PalmParticle(
+                            this.x,
+                            this.y,
+                            angle + curve,
+                            this.hue + Math.random() * 20 - 10,
+                            this.size * (0.6 - progress * 0.4),
+                            this.explosionScale,
+                            'leaf',
+                            progress
+                        ));
+                    }
+                }
+                
+                // 创建树干
+                for(let i = 0; i < trunkParticles; i++) {
+                    const progress = i / trunkParticles;
+                    const angle = Math.PI * 1.5 + (Math.random() - 0.5) * 0.2;
+                    
+                    particles.push(new PalmParticle(
+                        this.x,
+                        this.y,
+                        angle,
+                        this.hue + 30,
+                        this.size * 0.8,
+                        this.explosionScale,
+                        'trunk',
+                        progress
+                    ));
+                }
+            }
+        }
+
+        // 椰叶粒子�?
+        class PalmParticle extends Particle {
+            constructor(x, y, angle, hue, size, scale, type, position) {
+                super(x, y, angle, hue, size, scale);
+                this.type = type;
+                this.position = position;
+                
+                if(type === 'leaf') {
+                    this.speed = (Math.random() * 12 + 8) * scale;
+                    this.gravity = 0.15;
+                    this.decay = 0.012;
+                    this.friction = 0.97;
+                    this.brightness = Math.random() * 20 + 80;
+                } else {
+                    this.speed = (Math.random() * 6 + 4) * scale;
+                    this.gravity = 0.2;
+                    this.decay = 0.015;
+                    this.friction = 0.95;
+                    this.brightness = Math.random() * 30 + 70;
+                }
+                
+                this.wave = Math.random() * Math.PI * 2;
+                this.waveSpeed = Math.random() * 0.02 + 0.01;
+            }
+
+            update() {
+                this.coordinates.pop();
+                this.coordinates.unshift([this.x, this.y]);
+                
+                this.speed *= this.friction;
+                
+                // 添加波浪效果，使叶子看起来更自然
+                if(this.type === 'leaf') {
+                    this.wave += this.waveSpeed;
+                    const waveOffset = Math.sin(this.wave) * 0.3;
+                    this.x += Math.cos(this.angle + waveOffset) * this.speed;
+                    this.y += Math.sin(this.angle + waveOffset) * this.speed + this.gravity;
+                } else {
+                    this.x += Math.cos(this.angle) * this.speed;
+                    this.y += Math.sin(this.angle) * this.speed + this.gravity;
+                }
+                
+                this.alpha -= this.decay;
+                return this.alpha >= 0.05;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], 
+                          this.coordinates[this.coordinates.length - 1][1]);
+                ctx.lineTo(this.x, this.y);
+                
+                // 为叶子添加渐变色效果
+                if(this.type === 'leaf') {
+                    const gradientHue = this.hue + this.position * 10;
+                    ctx.strokeStyle = `hsla(${gradientHue}, 100%, ${this.brightness}%, ${this.alpha})`;
+                } else {
+                    ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+                }
+                
+                ctx.lineWidth = this.size;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            }
+        }
+
+        // 星环烟花�?
+        class StarRingFirework extends Firework {
+            explode() {
+                const ringCount = 3; // 保持3个环
+                const particlesPerRing = Math.floor(80 * this.explosionScale); // 增加环上的粒子数
+                const starCount = Math.floor(12 * this.explosionScale); // 增加星星数量
+                const centerParticles = Math.floor(40 * this.explosionScale); // 增加中心粒子�?
+                
+                // 创建多个�?
+                for(let ring = 0; ring < ringCount; ring++) {
+                    const radius = (40 + ring * 35) * this.explosionScale; // 增加环的半径和间�?
+                    
+                    // 创建环的基本粒子
+                    for(let i = 0; i < particlesPerRing; i++) {
+                        const angle = (Math.PI * 2 * i) / particlesPerRing;
+                        particles.push(new StarRingParticle(
+                            this.x,
+                            this.y,
+                            angle,
+                            this.hue + ring * 20, // 增加颜色差异
+                            this.size * 0.8, // 增加粒子大小
+                            this.explosionScale,
+                            'ring',
+                            radius
+                        ));
+                    }
+                    
+                    // 在环上添加星�?
+                    for(let i = 0; i < starCount; i++) {
+                        const angle = (Math.PI * 2 * i) / starCount;
+                        particles.push(new StarRingParticle(
+                            this.x,
+                            this.y,
+                            angle,
+                            this.hue + ring * 20,
+                            this.size * 2.0, // 显著增加星星大小
+                            this.explosionScale,
+                            'star',
+                            radius
+                        ));
+                    }
+                }
+                
+                // 添加中心爆发效果
+                for(let i = 0; i < centerParticles; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    particles.push(new StarRingParticle(
+                        this.x,
+                        this.y,
+                        angle,
+                        this.hue,
+                        this.size * 0.7,
+                        this.explosionScale,
+                        'center',
+                        0
+                    ));
+                }
+            }
+        }
+
+        // 星环粒子�?
+        class StarRingParticle extends Particle {
+            constructor(x, y, angle, hue, size, scale, type, radius) {
+                super(x, y, angle, hue, size, scale);
+                this.type = type;
+                this.radius = radius;
+                this.originalRadius = radius;
+                
+                if(type === 'ring') {
+                    this.speed = (Math.random() * 1.5 + 1) * scale; // 降低速度使环更稳�?
+                    this.gravity = 0.08; // 减小重力影响
+                    this.decay = 0.012; // 降低衰减速度
+                    this.friction = 0.99; // 增加摩擦力使运动更平�?
+                    this.brightness = Math.random() * 15 + 85; // 提高亮度
+                } else if(type === 'star') {
+                    this.speed = (Math.random() * 2 + 1.5) * scale;
+                    this.gravity = 0.1;
+                    this.decay = 0.015;
+                    this.friction = 0.98;
+                    this.brightness = Math.random() * 15 + 85;
+                    this.pulseSpeed = Math.random() * 0.01 + 0.005; // 降低脉动速度
+                    this.pulseSize = Math.random() * 0.8 + 0.6; // 增加脉动幅度
+                } else {
+                    this.speed = (Math.random() * 4 + 2) * scale;
+                    this.gravity = 0.15;
+                    this.decay = 0.018;
+                    this.friction = 0.96;
+                    this.brightness = Math.random() * 20 + 80;
+                }
+                
+                this.sparkle = Math.random() < 0.8; // 增加闪烁概率
+                this.sparkleSpeed = Math.random() * 0.015 + 0.005; // 调整闪烁速度
+            }
+
+            update() {
+                this.coordinates.pop();
+                this.coordinates.unshift([this.x, this.y]);
+                
+                if(this.type === 'ring' || this.type === 'star') {
+                    // 环和星星的运�?
+                    this.radius *= this.friction;
+                    if(this.type === 'star') {
+                        // 星星大小脉动效果
+                        this.size = this.initialSize * (1 + Math.sin(Date.now() * this.pulseSpeed) * this.pulseSize);
+                    }
+                    
+                    const targetX = this.initialX + Math.cos(this.angle) * this.radius;
+                    const targetY = this.initialY + Math.sin(this.angle) * this.radius;
+                    
+                    this.x += (targetX - this.x) * 0.15; // 增加移动速度
+                    this.y += (targetY - this.y) * 0.15 + this.gravity;
+                } else {
+                    // 中心粒子的运�?
+                    this.speed *= this.friction;
+                    this.x += Math.cos(this.angle) * this.speed;
+                    this.y += Math.sin(this.angle) * this.speed + this.gravity;
+                }
+                
+                // 闪烁效果
+                if(this.sparkle) {
+                    this.brightness = 85 + Math.sin(Date.now() * this.sparkleSpeed) * 15;
+                }
+                
+                this.alpha -= this.decay;
+                return this.alpha >= 0.05;
+            }
+
+            draw() {
+                ctx.beginPath();
+                
+                if(this.type === 'star') {
+                    // 绘制更大更明显的星星形状
+                    const spikes = 5;
+                    const outerRadius = this.size;
+                    const innerRadius = this.size * 0.5; // 增加内部半径比例
+                    
+                    for(let i = 0; i < spikes * 2; i++) {
+                        const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                        const currAngle = (Math.PI * i) / spikes;
+                        const x = this.x + Math.cos(currAngle) * radius;
+                        const y = this.y + Math.sin(currAngle) * radius;
+                        
+                        if(i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                    ctx.closePath();
+                    // 添加发光效果
+                    ctx.shadowBlur = this.size * 2;
+                    ctx.shadowColor = `hsla(${this.hue}, 100%, 70%, ${this.alpha})`;
+                    ctx.fillStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                } else {
+                    // 普通粒子的绘制
+                    ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], 
+                              this.coordinates[this.coordinates.length - 1][1]);
+                    ctx.lineTo(this.x, this.y);
+                    ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+                    ctx.lineWidth = this.size;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // 双重爆炸烟花�?
+        class DoubleExplodeFirework extends Firework {
+            explode() {
+                const particleCount = Math.floor(60 * this.explosionScale); // 第一次爆炸的粒子�?
+                const secondaryCount = Math.floor(8 * this.explosionScale); // 会进行二次爆炸的粒子�?
+                
+                // 创建第一次爆炸的粒子
+                for(let i = 0; i < particleCount; i++) {
+                    const angle = Math.PI * 2 * i / particleCount;
+                    const isSecondary = i % Math.floor(particleCount / secondaryCount) === 0;
+                    
+                    particles.push(new DoubleExplodeParticle(
+                        this.x,
+                        this.y,
+                        angle,
+                        this.hue,
+                        this.size * this.explosionScale,
+                        this.explosionScale,
+                        isSecondary,
+                        this.hue + Math.random() * 30 - 15
+                    ));
+                }
+            }
+        }
+
+        // 双重爆炸粒子�?
+        class DoubleExplodeParticle extends Particle {
+            constructor(x, y, angle, hue, size, scale, isSecondary, secondaryHue) {
+                super(x, y, angle, hue, size, scale);
+                this.isSecondary = isSecondary;
+                this.secondaryHue = secondaryHue;
+                this.hasExploded = false;
+                this.explosionTime = 30 + Math.random() * 20; // 延迟爆炸时间
+                this.timeCount = 0;
+                
+                // 调整物理参数
+                this.gravity = 0.2;
+                this.decay = isSecondary ? 0.012 : 0.02; // 二次爆炸粒子寿命更长
+                this.friction = 0.97;
+                this.brightness = Math.random() * 20 + 80;
+                
+                // 初始速度
+                this.speed = (Math.random() * 6 + 6) * scale;
+                
+                // 闪烁效果
+                this.shimmer = Math.random() < 0.3;
+                this.shimmerSpeed = Math.random() * 0.02 + 0.01;
+            }
+
+            update() {
+                this.coordinates.pop();
+                this.coordinates.unshift([this.x, this.y]);
+                
+                // 闪烁效果
+                if(this.shimmer) {
+                    this.brightness = 80 + Math.sin(Date.now() * this.shimmerSpeed) * 20;
+                }
+                
+                // 运动更新
+                this.speed *= this.friction;
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed + this.gravity;
+                
+                // 处理二次爆炸
+                if(this.isSecondary && !this.hasExploded) {
+                    this.timeCount++;
+                    if(this.timeCount >= this.explosionTime) {
+                        this.explodeSecondary();
+                        this.hasExploded = true;
+                    }
+                }
+                
+                this.alpha -= this.decay;
+                return this.alpha >= 0.05;
+            }
+
+            explodeSecondary() {
+                const particleCount = 20; // 二次爆炸产生的粒子数
+                
+                for(let i = 0; i < particleCount; i++) {
+                    const angle = Math.PI * 2 * i / particleCount;
+                    particles.push(new Particle(
+                        this.x,
+                        this.y,
+                        angle,
+                        this.secondaryHue,
+                        this.size * 0.8,
+                        0.5
+                    ));
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], 
+                          this.coordinates[this.coordinates.length - 1][1]);
+                ctx.lineTo(this.x, this.y);
+                
+                if(this.isSecondary && !this.hasExploded) {
+                    // 二次爆炸粒子在爆炸前有特殊的亮度和大�?
+                    ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+                    ctx.lineWidth = this.size * 1.2;
+                } else {
+                    ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+                    ctx.lineWidth = this.size;
+                }
+                
+                ctx.lineCap = 'round';
+                ctx.stroke();
+                
+                // 为二次爆炸粒子添加发光效�?
+                if(this.isSecondary && !this.hasExploded) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * 0.5, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${this.hue}, 100%, ${this.brightness + 10}%, ${this.alpha * 0.3})`;
+                    ctx.fill();
+                }
+            }
+        }
+
+        // 梦幻星球烟花�?
+        class DreamPlanetFirework extends Firework {
+            explode() {
+                const ringCount = 3; // 光环数量
+                const particlesPerRing = Math.floor(50 * this.explosionScale); // 每个光环的粒子数
+                const coreParticles = Math.floor(100 * this.explosionScale); // 核心粒子�?
+                const orbitParticles = Math.floor(30 * this.explosionScale); // 轨道粒子�?
+                
+                // 创建核心
+                for(let i = 0; i < coreParticles; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = Math.random() * 10 * this.explosionScale;
+                    particles.push(new DreamPlanetParticle(
+                        this.x,
+                        this.y,
+                        angle,
+                        this.hue,
+                        this.size * 0.8,
+                        this.explosionScale,
+                        'core',
+                        radius
+                    ));
+                }
+                
+                // 创建光环
+                for(let ring = 0; ring < ringCount; ring++) {
+                    const ringRadius = (20 + ring * 15) * this.explosionScale;
+                    const ringHue = this.hue + ring * 25;
+                    
+                    for(let i = 0; i < particlesPerRing; i++) {
+                        const angle = (Math.PI * 2 * i) / particlesPerRing;
+                        particles.push(new DreamPlanetParticle(
+                            this.x,
+                            this.y,
+                            angle,
+                            ringHue,
+                            this.size * 0.6,
+                            this.explosionScale,
+                            'ring',
+                            ringRadius
+                        ));
+                    }
+                }
+                
+                // 创建轨道粒子
+                for(let i = 0; i < orbitParticles; i++) {
+                    const angle = (Math.PI * 2 * i) / orbitParticles;
+                    particles.push(new DreamPlanetParticle(
+                        this.x,
+                        this.y,
+                        angle,
+                        this.hue + 40,
+                        this.size * 1.2,
+                        this.explosionScale,
+                        'orbit',
+                        50 * this.explosionScale
+                    ));
+                }
+            }
+        }
+
+        // 梦幻星球粒子�?
+        class DreamPlanetParticle extends Particle {
+            constructor(x, y, angle, hue, size, scale, type, radius) {
+                super(x, y, angle, hue, size, scale);
+                this.type = type;
+                this.radius = radius;
+                this.originalRadius = radius;
+                this.orbitSpeed = (Math.random() * 0.02 + 0.01) * (Math.random() < 0.5 ? 1 : -1);
+                this.orbitAngle = angle;
+                
+                switch(type) {
+                    case 'core':
+                        this.gravity = 0.1;
+                        this.decay = 0.01;
+                        this.friction = 0.98;
+                        this.brightness = Math.random() * 30 + 70;
+                        break;
+                    case 'ring':
+                        this.gravity = 0.05;
+                        this.decay = 0.015;
+                        this.friction = 0.99;
+                        this.brightness = Math.random() * 20 + 80;
+                        break;
+                    case 'orbit':
+                        this.gravity = 0.02;
+                        this.decay = 0.008;
+                        this.friction = 0.995;
+                        this.brightness = Math.random() * 40 + 60;
+                        break;
+                }
+                
+                this.shimmer = Math.random() < 0.7;
+                this.shimmerSpeed = Math.random() * 0.015 + 0.005;
+            }
+
+            update() {
+                this.coordinates.pop();
+                this.coordinates.unshift([this.x, this.y]);
+                
+                // 闪烁效果
+                if(this.shimmer) {
+                    this.brightness = this.type === 'core' ? 
+                        70 + Math.sin(Date.now() * this.shimmerSpeed) * 30 :
+                        80 + Math.sin(Date.now() * this.shimmerSpeed) * 20;
+                }
+                
+                if(this.type === 'orbit') {
+                    // 轨道粒子围绕中心旋转
+                    this.orbitAngle += this.orbitSpeed;
+                    this.x = this.initialX + Math.cos(this.orbitAngle) * this.radius;
+                    this.y = this.initialY + Math.sin(this.orbitAngle) * this.radius + this.gravity * 10;
+                    this.radius *= 0.995;
+                } else if(this.type === 'ring') {
+                    // 光环粒子缓慢扩散
+                    this.radius *= 1.002;
+                    this.x = this.initialX + Math.cos(this.angle) * this.radius;
+                    this.y = this.initialY + Math.sin(this.angle) * this.radius + this.gravity * 5;
+                } else {
+                    // 核心粒子向外扩散
+                    this.speed *= this.friction;
+                    this.x += Math.cos(this.angle) * this.speed;
+                    this.y += Math.sin(this.angle) * this.speed + this.gravity;
+                }
+                
+                this.alpha -= this.decay;
+                return this.alpha >= 0.05;
+            }
+
+            draw() {
+                ctx.beginPath();
+                
+                if(this.type === 'core') {
+                    // 核心粒子绘制为点
+                    ctx.arc(this.x, this.y, this.size * 0.8, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+                    ctx.fill();
+                } else {
+                    // 光环和轨道粒子绘制为�?
+                    ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], 
+                              this.coordinates[this.coordinates.length - 1][1]);
+                    ctx.lineTo(this.x, this.y);
+                    ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+                    ctx.lineWidth = this.type === 'orbit' ? this.size * 1.5 : this.size;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                }
+                
+                // 为特定类型的粒子添加发光效果
+                if(this.type === 'orbit' || (this.type === 'core' && this.shimmer)) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * (this.type === 'orbit' ? 0.8 : 0.4), 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${this.hue}, 100%, ${this.brightness + 10}%, ${this.alpha * 0.3})`;
+                    ctx.fill();
+                }
+            }
+        }
+
+        // 星云烟花�?
+        class NebulaFirework extends Firework {
+            explode() {
+                const particleCount = Math.floor(120 * this.explosionScale); // 星云粒子数量
+                const coreParticles = Math.floor(40 * this.explosionScale); // 核心粒子数量
+                const streamCount = 5; // 星云流数�?
+                
+                // 创建星云核心
+                for(let i = 0; i < coreParticles; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = Math.random() * 8 * this.explosionScale;
+                    particles.push(new NebulaParticle(
+                        this.x,
+                        this.y,
+                        angle,
+                        this.hue,
+                        this.size * 1.2,
+                        this.explosionScale,
+                        'core',
+                        radius
+                    ));
+                }
+                
+                // 创建星云�?
+                for(let stream = 0; stream < streamCount; stream++) {
+                    const baseAngle = (Math.PI * 2 * stream) / streamCount;
+                    const particlesPerStream = Math.floor(particleCount / streamCount);
+                    
+                    for(let i = 0; i < particlesPerStream; i++) {
+                        const progress = i / particlesPerStream;
+                        const spread = Math.PI * 0.6; // 流的扩散角度
+                        const angle = baseAngle + (Math.random() - 0.5) * spread;
+                        const hueVariation = 30; // 色相变化范围
+                        
+                        particles.push(new NebulaParticle(
+                            this.x,
+                            this.y,
+                            angle,
+                            this.hue + (Math.random() - 0.5) * hueVariation,
+                            this.size * (0.8 - progress * 0.3),
+                            this.explosionScale,
+                            'stream',
+                            progress
+                        ));
+                    }
+                }
+            }
+        }
+
+        // 星云粒子�?
+        class NebulaParticle extends Particle {
+            constructor(x, y, angle, hue, size, scale, type, param) {
+                super(x, y, angle, hue, size, scale);
+                this.type = type;
+                this.param = param; // 用于存储半径或进�?
+                
+                if(type === 'core') {
+                    this.gravity = 0.1;
+                    this.decay = 0.015;
+                    this.friction = 0.98;
+                    this.speed = (Math.random() * 3 + 2) * scale;
+                    this.brightness = Math.random() * 30 + 70;
+                    this.radius = param;
+                } else {
+                    this.gravity = 0.05;
+                    this.decay = 0.01;
+                    this.friction = 0.99;
+                    this.speed = (Math.random() * 8 + 4) * scale;
+                    this.brightness = Math.random() * 20 + 80;
+                    this.turbulence = Math.random() * 0.2 + 0.1;
+                    this.waveOffset = Math.random() * Math.PI * 2;
+                }
+                
+                this.glow = Math.random() < 0.8;
+                this.glowSpeed = Math.random() * 0.01 + 0.005;
+                this.initialX = x;
+                this.initialY = y;
+                this.initialAngle = angle;
+            }
+
+            update() {
+                this.coordinates.pop();
+                this.coordinates.unshift([this.x, this.y]);
+                
+                // 发光效果
+                if(this.glow) {
+                    this.brightness = this.type === 'core' ? 
+                        70 + Math.sin(Date.now() * this.glowSpeed) * 30 :
+                        80 + Math.sin(Date.now() * this.glowSpeed) * 20;
+                }
+                
+                if(this.type === 'core') {
+                    // 核心粒子运动
+                    this.speed *= this.friction;
+                    this.x += Math.cos(this.angle) * this.speed;
+                    this.y += Math.sin(this.angle) * this.speed + this.gravity;
+                } else {
+                    // 星云流粒子运�?
+                    this.speed *= this.friction;
+                    
+                    // 添加湍流效果
+                    const time = Date.now() * 0.001;
+                    const wave = Math.sin(time + this.waveOffset) * this.turbulence;
+                    const adjustedAngle = this.angle + wave;
+                    
+                    this.x += Math.cos(adjustedAngle) * this.speed;
+                    this.y += Math.sin(adjustedAngle) * this.speed + this.gravity;
+                }
+                
+                this.alpha -= this.decay;
+                return this.alpha >= 0.05;
+            }
+
+            draw() {
+                ctx.beginPath();
+                
+                if(this.type === 'core') {
+                    // 绘制核心粒子
+                    ctx.arc(this.x, this.y, this.size * 0.8, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+                    ctx.fill();
+                    
+                    // 添加发光效果
+                    if(this.glow) {
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size * 1.5, 0, Math.PI * 2);
+                        ctx.fillStyle = `hsla(${this.hue}, 100%, ${this.brightness + 10}%, ${this.alpha * 0.3})`;
+                        ctx.fill();
+                    }
+                } else {
+                    // 绘制星云流粒�?
+                    ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], 
+                              this.coordinates[this.coordinates.length - 1][1]);
+                    ctx.lineTo(this.x, this.y);
+                    
+                    // 使用渐变�?
+                    const gradient = ctx.createLinearGradient(
+                        this.coordinates[this.coordinates.length - 1][0],
+                        this.coordinates[this.coordinates.length - 1][1],
+                        this.x,
+                        this.y
+                    );
+                    gradient.addColorStop(0, `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`);
+                    gradient.addColorStop(1, `hsla(${this.hue + 30}, 100%, ${this.brightness}%, ${this.alpha * 0.5})`);
+                    
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = this.size;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                    
+                    // 添加发光效果
+                    if(this.glow) {
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size * 0.5, 0, Math.PI * 2);
+                        ctx.fillStyle = `hsla(${this.hue}, 100%, ${this.brightness + 10}%, ${this.alpha * 0.3})`;
+                        ctx.fill();
+                    }
+                }
+            }
+        }
+
+        // 瀑布烟花�?
+        class WaterfallFirework extends Firework {
+            explode() {
+                const streamCount = 8; // 瀑布流的数量
+                const particlesPerStream = Math.floor(40 * this.explosionScale); // 每条流的粒子�?
+                const spreadAngle = Math.PI * 0.3; // 瀑布扩散角度
+                
+                // 创建多条瀑布�?
+                for(let stream = 0; stream < streamCount; stream++) {
+                    const baseAngle = Math.PI * 1.5 + (Math.random() - 0.5) * spreadAngle;
+                    const streamHue = this.hue + (Math.random() - 0.5) * 20;
+                    
+                    for(let i = 0; i < particlesPerStream; i++) {
+                        const progress = i / particlesPerStream;
+                        const angle = baseAngle + (Math.random() - 0.5) * 0.2;
+                        
+                        particles.push(new WaterfallParticle(
+                            this.x,
+                            this.y,
+                            angle,
+                            streamHue,
+                            this.size * (1 - progress * 0.5),
+                            this.explosionScale,
+                            progress
+                        ));
+                    }
+                }
+            }
+        }
+
+        // 瀑布粒子�?
+        class WaterfallParticle extends Particle {
+            constructor(x, y, angle, hue, size, scale, progress) {
+                super(x, y, angle, hue, size, scale);
+                this.progress = progress;
+                
+                // 调整物理参数
+                this.gravity = 0.35; // 较大的重�?
+                this.decay = 0.01 + progress * 0.01; // 渐进的衰�?
+                this.friction = 0.98;
+                this.brightness = Math.random() * 20 + 80;
+                
+                // 初始速度随进度变�?
+                this.speed = (Math.random() * 4 + 8 - progress * 4) * scale;
+                
+                // 闪烁效果
+                this.shimmer = Math.random() < 0.3;
+                this.shimmerSpeed = Math.random() * 0.02 + 0.01;
+                
+                // 轨迹记录
+                this.coordinates = [];
+                this.coordinateCount = 3 + Math.floor(progress * 3);
+                while(this.coordinateCount--) {
+                    this.coordinates.push([this.x, this.y]);
+                }
+            }
+
+            update() {
+                this.coordinates.pop();
+                this.coordinates.unshift([this.x, this.y]);
+                
+                // 闪烁效果
+                if(this.shimmer) {
+                    this.brightness = 80 + Math.sin(Date.now() * this.shimmerSpeed) * 20;
+                }
+                
+                // 运动更新
+                this.speed *= this.friction;
+                
+                // 添加微小的水平摆�?
+                const wave = Math.sin(Date.now() * 0.003 + this.progress * 10) * 0.1;
+                this.x += Math.cos(this.angle + wave) * this.speed;
+                this.y += Math.sin(this.angle + wave) * this.speed + this.gravity;
+                
+                this.alpha -= this.decay;
+                return this.alpha >= 0.05;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], 
+                          this.coordinates[this.coordinates.length - 1][1]);
+                
+                // 创建渐变效果
+                const gradient = ctx.createLinearGradient(
+                    this.coordinates[this.coordinates.length - 1][0],
+                    this.coordinates[this.coordinates.length - 1][1],
+                    this.x,
+                    this.y
+                );
+                
+                gradient.addColorStop(0, `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`);
+                gradient.addColorStop(1, `hsla(${this.hue}, 100%, ${this.brightness + 10}%, ${this.alpha * 0.5})`);
+                
+                // 绘制轨迹
+                for(let i = 1; i < this.coordinates.length; i++) {
+                    ctx.lineTo(this.coordinates[i][0], this.coordinates[i][1]);
+                }
+                
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = this.size;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+                
+                // 添加发光效果
+                if(this.shimmer) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * 0.5, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${this.hue}, 100%, ${this.brightness + 10}%, ${this.alpha * 0.3})`;
+                    ctx.fill();
+                }
+            }
+        }
+
+        // 彩虹瀑布烟花�?
+        class RainbowCascadeFirework extends Firework {
+            explode() {
+                const layerCount = 6; // 彩虹层数
+                const particlesPerLayer = Math.floor(50 * this.explosionScale); // 每层的粒子数
+                const colors = [0, 30, 60, 120, 240, 280]; // 彩虹色相�?
+                
+                for(let layer = 0; layer < layerCount; layer++) {
+                    const layerHue = colors[layer];
+                    const baseAngle = Math.PI * 1.5; // 向下的基准角�?
+                    const spreadAngle = Math.PI * 0.4; // 扩散角度
+                    
+                    for(let i = 0; i < particlesPerLayer; i++) {
+                        const progress = i / particlesPerLayer;
+                        const angle = baseAngle + (Math.random() - 0.5) * spreadAngle;
+                        
+                        particles.push(new RainbowCascadeParticle(
+                            this.x,
+                            this.y,
+                            angle,
+                            layerHue,
+                            this.size * (1.2 - progress * 0.4),
+                            this.explosionScale,
+                            layer,
+                            progress
+                        ));
+                    }
+                }
+            }
+        }
+
+        // 彩虹瀑布粒子�?
+        class RainbowCascadeParticle extends Particle {
+            constructor(x, y, angle, hue, size, scale, layer, progress) {
+                super(x, y, angle, hue, size, scale);
+                this.layer = layer;
+                this.progress = progress;
+                
+                // 调整物理参数
+                this.gravity = 0.3 + layer * 0.02; // 不同层有不同的重�?
+                this.decay = 0.008 + progress * 0.005;
+                this.friction = 0.98;
+                this.brightness = Math.random() * 20 + 80;
+                
+                // 初始速度随层数变�?
+                this.speed = (Math.random() * 6 + 8 - layer * 0.8) * scale;
+                
+                // 波动效果
+                this.wave = Math.random() * Math.PI * 2;
+                this.waveSpeed = Math.random() * 0.02 + 0.01;
+                this.waveAmplitude = Math.random() * 0.4 + 0.2;
+                
+                // 轨迹记录
+                this.coordinates = [];
+                this.coordinateCount = 5;
+                while(this.coordinateCount--) {
+                    this.coordinates.push([this.x, this.y]);
+                }
+                
+                // 发光效果
+                this.glow = Math.random() < 0.7;
+                this.glowSpeed = Math.random() * 0.01 + 0.005;
+            }
+
+            update() {
+                this.coordinates.pop();
+                this.coordinates.unshift([this.x, this.y]);
+                
+                // 发光效果
+                if(this.glow) {
+                    this.brightness = 80 + Math.sin(Date.now() * this.glowSpeed) * 20;
+                }
+                
+                // 运动更新
+                this.speed *= this.friction;
+                
+                // 添加水平波动
+                this.wave += this.waveSpeed;
+                const waveOffset = Math.sin(this.wave) * this.waveAmplitude;
+                
+                this.x += Math.cos(this.angle + waveOffset) * this.speed;
+                this.y += Math.sin(this.angle + waveOffset) * this.speed + this.gravity;
+                
+                this.alpha -= this.decay;
+                return this.alpha >= 0.05;
+            }
+
+            draw() {
+                ctx.beginPath();
+                
+                if(this.type === 'core') {
+                    // 绘制核心粒子
+                    ctx.arc(this.x, this.y, this.size * 0.8, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+                    ctx.fill();
+                    
+                    // 添加发光效果
+                    if(this.glow) {
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size * 1.5, 0, Math.PI * 2);
+                        ctx.fillStyle = `hsla(${this.hue}, 100%, ${this.brightness + 10}%, ${this.alpha * 0.3})`;
+                        ctx.fill();
+                    }
+                } else {
+                    // 绘制星云流粒�?
+                    ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], 
+                              this.coordinates[this.coordinates.length - 1][1]);
+                    ctx.lineTo(this.x, this.y);
+                    
+                    // 使用渐变�?
+                    const gradient = ctx.createLinearGradient(
+                        this.coordinates[this.coordinates.length - 1][0],
+                        this.coordinates[this.coordinates.length - 1][1],
+                        this.x,
+                        this.y
+                    );
+                    gradient.addColorStop(0, `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`);
+                    gradient.addColorStop(1, `hsla(${this.hue + 20}, 100%, ${this.brightness}%, ${this.alpha * 0.6})`);
+                    
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = this.size;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // 星光轨迹烟花�?
+        class StarTrailFirework extends Firework {
+            explode() {
+                const trailCount = 12; // 轨迹数量
+                const particlesPerTrail = Math.floor(40 * this.explosionScale); // 每条轨迹的粒子数
+                const starCount = Math.floor(15 * this.explosionScale); // 星星数量
+                
+                // 创建主要轨迹
+                for(let trail = 0; trail < trailCount; trail++) {
+                    const baseAngle = (Math.PI * 2 * trail) / trailCount;
+                    const trailHue = this.hue + trail * (360 / trailCount);
+                    
+                    for(let i = 0; i < particlesPerTrail; i++) {
+                        const progress = i / particlesPerTrail;
+                        const spread = Math.PI * 0.15; // 轨迹扩散角度
+                        const angle = baseAngle + (Math.random() - 0.5) * spread * (1 - progress);
+                        
+                        particles.push(new StarTrailParticle(
+                            this.x,
+                            this.y,
+                            angle,
+                            trailHue,
+                            this.size * (1.2 - progress * 0.5),
+                            this.explosionScale,
+                            'trail',
+                            progress
+                        ));
+                    }
+                }
+                
+                // 创建星星
+                for(let i = 0; i < starCount; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    particles.push(new StarTrailParticle(
+                        this.x,
+                        this.y,
+                        angle,
+                        this.hue,
+                        this.size * 2,
+                        this.explosionScale,
+                        'star',
+                        0
+                    ));
+                }
+            }
+        }
+
+        // 星光轨迹粒子�?
+        class StarTrailParticle extends Particle {
+            constructor(x, y, angle, hue, size, scale, type, progress) {
+                super(x, y, angle, hue, size, scale);
+                this.type = type;
+                this.progress = progress;
+                
+                if(type === 'trail') {
+                    this.gravity = 0.15;
+                    this.decay = 0.012 + progress * 0.008;
+                    this.friction = 0.98;
+                    this.speed = (Math.random() * 6 + 8 - progress * 4) * scale;
+                    this.brightness = Math.random() * 20 + 80;
+                    
+                    // 轨迹波动效果
+                    this.wave = Math.random() * Math.PI * 2;
+                    this.waveSpeed = Math.random() * 0.02 + 0.01;
+                    this.waveAmplitude = Math.random() * 0.3 + 0.1;
+                } else {
+                    this.gravity = 0.1;
+                    this.decay = 0.015;
+                    this.friction = 0.99;
+                    this.speed = (Math.random() * 4 + 6) * scale;
+                    this.brightness = Math.random() * 30 + 70;
+                    
+                    // 星星闪烁效果
+                    this.twinkle = true;
+                    this.twinkleSpeed = Math.random() * 0.05 + 0.02;
+                }
+                
+                // 轨迹记录
+                this.coordinates = [];
+                this.coordinateCount = type === 'trail' ? 6 : 3;
+                while(this.coordinateCount--) {
+                    this.coordinates.push([this.x, this.y]);
+                }
+            }
+
+            update() {
+                this.coordinates.pop();
+                this.coordinates.unshift([this.x, this.y]);
+                
+                if(this.type === 'star' && this.twinkle) {
+                    this.brightness = 70 + Math.sin(Date.now() * this.twinkleSpeed) * 30;
+                }
+                
+                this.speed *= this.friction;
+                
+                if(this.type === 'trail') {
+                    // 轨迹粒子的波浪运�?
+                    this.wave += this.waveSpeed;
+                    const waveOffset = Math.sin(this.wave) * this.waveAmplitude;
+                    this.x += Math.cos(this.angle + waveOffset) * this.speed;
+                    this.y += Math.sin(this.angle + waveOffset) * this.speed + this.gravity;
+                } else {
+                    // 星星粒子的运�?
+                    this.x += Math.cos(this.angle) * this.speed;
+                    this.y += Math.sin(this.angle) * this.speed + this.gravity;
+                }
+                
+                this.alpha -= this.decay;
+                return this.alpha >= 0.05;
+            }
+
+            draw() {
+                ctx.beginPath();
+                
+                if(this.type === 'star') {
+                    // 绘制五角�?
+                    const spikes = 5;
+                    const outerRadius = this.size;
+                    const innerRadius = this.size * 0.4;
+                    
+                    for(let i = 0; i < spikes * 2; i++) {
+                        const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                        const currAngle = (Math.PI * i) / spikes;
+                        const x = this.x + Math.cos(currAngle) * radius;
+                        const y = this.y + Math.sin(currAngle) * radius;
+                        
+                        if(i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                    
+                    ctx.closePath();
+                    ctx.fillStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+                    ctx.fill();
+                    
+                    // 星星发光效果
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * 1.2, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${this.hue}, 100%, ${this.brightness + 10}%, ${this.alpha * 0.3})`;
+                    ctx.fill();
+                } else {
+                    // 绘制轨迹
+                    const gradient = ctx.createLinearGradient(
+                        this.coordinates[this.coordinates.length - 1][0],
+                        this.coordinates[this.coordinates.length - 1][1],
+                        this.x,
+                        this.y
+                    );
+                    
+                    gradient.addColorStop(0, `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`);
+                    gradient.addColorStop(1, `hsla(${this.hue + 30}, 100%, ${this.brightness}%, ${this.alpha * 0.5})`);
+                    
+                    ctx.moveTo(this.coordinates[this.coordinates.length - 1][0],
+                             this.coordinates[this.coordinates.length - 1][1]);
+                    ctx.lineTo(this.x, this.y);
+                    
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = this.size;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

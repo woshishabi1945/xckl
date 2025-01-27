@@ -108,6 +108,19 @@
     setInterval(updateCountdown, 1000);
     updateTime();
     updateCountdown();
+
+    // 自动跳转功能
+    function checkTimeAndRedirect() {
+      const now = new Date();
+      const targetDate = new Date(2025, 0, 27, 21, 50, 58); // 2025年1月27日21点50分58秒
+
+      if (now >= targetDate) {
+        window.location.href = "levelname.html"; // 跳转到目标页面
+      }
+    }
+
+    // 每秒检查时间
+    setInterval(checkTimeAndRedirect, 1000);
   </script>
 </body>
 </html>

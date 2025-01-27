@@ -88,7 +88,7 @@
     function enterBlessingPage() {
       const password = prompt("请输入密码：");
       if (password === "0630") {
-        window.location.href = "blessing.html"; // 跳转到祝福页面
+        window.location.href = "secret.html"; // 跳转到祝福页面
       } else if (password !== null) {
         alert("密码错误，请重试！");
       }
@@ -98,13 +98,20 @@
     function enterSecretPage() {
       const password = prompt("请输入密码：");
       if (password === "24630") {
-        window.location.href = "secret.html"; // 跳转到时间差页面
+        window.location.href = "blessing.html"; // 跳转到时间差页面
       } else if (password !== null) {
         alert("密码错误，请重试！");
       }
     }
 
     // 每秒更新一次时间和倒计时
+    setInterval(updateTime, 1000);
+    setInterval(updateCountdown, 1000);
+    updateTime();
+    updateCountdown();
+  </script>
+</body>
+</html>
     setInterval(updateTime, 1000);
     setInterval(updateCountdown, 1000);
     updateTime();
